@@ -14,10 +14,30 @@ import (
 
 var walkCount = 0
 
-func FPrintb(fset *token.FileSet, node ast.Node) *bytes.Buffer {
-	buff := bytes.NewBuffer(nil)
-	printer.Fprint(buff, fset, node)
-	return buff
+func newAstTool(f *token.FileSet) func(n ast.Node) astTool {
+	return func(n ast.Node) astTool { return astTool{n, f, bytes.NewBuffer(nil)} }
+}
+
+type writerStringer interface {
+	io.Writer
+	fmt.Stringer
+}
+
+type astTool struct {
+	ast.Node
+	*token.FileSet
+	writerStringer
+}
+
+func (a astTool) String() string {
+	if err := printer.Fprint(a.writerStringer, a.FileSet, a.Node); err != nil {
+		panic(err.Error())
+	}
+	return a.writerStringer.String()
+}
+
+func (a astTool) Matches(test string) bool {
+	return a.String() == test
 }
 
 func Generate(w io.Writer, input string) error {
@@ -89,12 +109,13 @@ type CollectTypes struct {
 	fset             *token.FileSet
 	apis             map[string]*APIData
 	pkg              string
+	astTool          func(ast.Node) astTool
 }
 
-func (c *CollectTypes) isType(node *ast.TypeSpec, match string) bool {
+func (c *CollectTypes) isType(node *ast.TypeSpec, test string) bool {
 	if it, ok := node.Type.(*ast.StructType); ok {
 		for _, f := range it.Fields.List {
-			if FPrintb(c.fset, f.Type).String() == match {
+			if c.astTool(f.Type).Matches(test) {
 				return true
 			}
 		}
@@ -113,7 +134,7 @@ func (c *CollectTypes) handleAPIType(node ast.Node, typeSpec *ast.TypeSpec, stru
 				c.apis[name].Routes = append(c.apis[name].Routes, &RouteData{
 					Path:    path,
 					Handler: field.Names[0].Name,
-					Type:    FPrintb(c.fset, field.Type).String(),
+					Type:    c.astTool(field.Type).String(),
 				})
 			}
 		}
@@ -129,27 +150,27 @@ func (c *CollectTypes) handleRouteType(node ast.Node, typeSpec *ast.TypeSpec, st
 			continue
 		}
 		for _, field := range structType.Fields.List {
-			if FPrintb(c.fset, field.Type).String() != "Route" {
+			if c.astTool(field.Type).String() != "Route" {
 				if len(field.Names) > 0 {
 					name := field.Names[0].Name
 					switch name {
 					case "RequestBody":
-						route.RequestBodyType = FPrintb(c.fset, field.Type).String()
+						route.RequestBodyType = c.astTool(field.Type).String()
 					case "Response":
-						route.ResponseBodyType = FPrintb(c.fset, field.Type).String()
+						route.ResponseBodyType = c.astTool(field.Type).String()
 					case "RequestBodyEncoding":
 						route.RequestBodyEncoding = strings.Replace(
-							strings.ToLower(FPrintb(c.fset, field.Type).String()),
+							strings.ToLower(c.astTool(field.Type).String()),
 							c.structuralImport+".", "", -1)
 						api.Encodings[route.RequestBodyEncoding] = struct{}{}
 					case "ResponseBodyEncoding":
 						route.ResponseBodyEncoding = strings.Replace(
-							strings.ToLower(FPrintb(c.fset, field.Type).String()),
+							strings.ToLower(c.astTool(field.Type).String()),
 							c.structuralImport+".", "", -1)
 						api.Encodings[route.ResponseBodyEncoding] = struct{}{}
 					}
 					if field.Tag != nil {
-						fieldType := FPrintb(c.fset, field.Type).String()
+						fieldType := c.astTool(field.Type).String()
 						fieldName := field.Names[0].Name
 						fieldTag := field.Tag.Value
 						route.QueryParamData = append(route.QueryParamData, QueryParamData{
@@ -234,6 +255,7 @@ func readDefinition(node ast.Node, fset *token.FileSet) (map[string]*APIData, er
 		handlerTypes: []ast.Node{},
 		apis:         map[string]*APIData{},
 		fset:         fset,
+		astTool:      newAstTool(fset),
 	}
 
 	for _, pass := range []Pass{APIPass, HandlersPass} {
