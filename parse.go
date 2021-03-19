@@ -64,19 +64,6 @@ type (
 	}
 )
 
-func (q QueryParamData) RenderExtractor() string {
-	getter := ""
-	if q.CoerceTo == "int" {
-		getter = fmt.Sprintf(`_%s := r.URL.Query().Get("%s")
-	%s, err := strconv.Atoi(_%s)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}`, q.Key, q.Key, q.CoercedVariableName, q.Key)
-	}
-	return getter
-}
-
 func (a *APIData) findRouteData(routeType string) *RouteData {
 	for idx, route := range a.Routes {
 		if route.Type == routeType {
