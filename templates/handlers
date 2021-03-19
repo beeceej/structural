@@ -1,0 +1,26 @@
+{{define "handlers" -}}
+{{range $route := .Routes}}
+func (a *{{$.Name}}API) Handle{{$route.Handler}}(w http.ResponseWriter, r *http.Request) {
+	var (
+		rb       {{$route.RequestBodyType}}
+		response {{$route.ResponseBodyType}}
+		err      error
+	)
+
+	if err = {{$route.RequestBodyEncoding}}.NewDecoder(r.Body).Decode(&rb); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if response, err = a.handle{{$route.Handler}}(rb); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = {{$route.ResponseBodyEncoding}}.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+{{end}}
+{{- end}}

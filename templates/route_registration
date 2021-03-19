@@ -1,0 +1,7 @@
+{{define "route_registration" -}}
+func (a *{{.Name}}API) Routes(mux *http.ServeMux) {
+	{{- range $route := .Routes}}
+	mux.HandleFunc({{.Path}}, a.Handle{{.Handler}})
+	{{- end}}
+}
+{{- end}}

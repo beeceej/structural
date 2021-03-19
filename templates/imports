@@ -1,0 +1,9 @@
+{{define "imports" -}}
+import (
+	{{- range $e, $_ := .Encodings}}
+	"encoding/{{$e}}"
+	{{- end}}
+	"net/http"
+	"strconv"
+)
+{{- end}}

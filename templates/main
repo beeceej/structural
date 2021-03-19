@@ -1,0 +1,10 @@
+{{define "main" -}}
+package {{.Package}}
+
+{{ template "imports" . }}
+
+type {{.Name}}API struct{}
+
+{{ template "route_registration" .}}
+{{ template "handlers" .}}
+{{- end}}

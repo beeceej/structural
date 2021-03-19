@@ -1,0 +1,61 @@
+package _definition
+
+import (
+	"encoding/json"
+	"encoding/xml"
+	"net/http"
+	"strconv"
+)
+
+type HelloWorldAPI struct{}
+
+func (a *HelloWorldAPI) Routes(mux *http.ServeMux) {
+	mux.HandleFunc("/", a.HandleRouteIntroduce)
+	mux.HandleFunc("/say-hi", a.HandleRouteSayHi)
+}
+
+func (a *HelloWorldAPI) HandleRouteIntroduce(w http.ResponseWriter, r *http.Request) {
+	var (
+		rb       IntroduceRequest
+		response IntroduceResponse
+		err      error
+	)
+
+	if err = json.NewDecoder(r.Body).Decode(&rb); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if response, err = a.handleRouteIntroduce(rb); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = xml.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (a *HelloWorldAPI) HandleRouteSayHi(w http.ResponseWriter, r *http.Request) {
+	var (
+		rb       IntroduceRequest
+		response IntroduceResponse
+		err      error
+	)
+
+	if err = json.NewDecoder(r.Body).Decode(&rb); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if response, err = a.handleRouteSayHi(rb); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
