@@ -1,8 +1,6 @@
 package _definition
 
-import (
-	st "github.com/beeceej/structural"
-)
+import "github.com/beeceej/structural"
 
 type (
 	IntroduceRequest struct {
@@ -14,21 +12,21 @@ type (
 		Message string `json:"response"`
 	}
 	Introduce struct {
-		st.Route
+		structural.Route
 		RequestBody          IntroduceRequest
 		Response             IntroduceResponse
-		RequestBodyEncoding  st.JSON
-		ResponseBodyEncoding st.XML
+		RequestBodyEncoding  structural.JSON
+		ResponseBodyEncoding structural.XML
 	}
 	SayHi struct {
-		st.Route
+		structural.Route
 		RequestBody          IntroduceRequest
 		Response             IntroduceResponse
-		RequestBodyEncoding  st.JSON
-		ResponseBodyEncoding st.JSON
+		RequestBodyEncoding  structural.JSON
+		ResponseBodyEncoding structural.JSON
 	}
 	HelloWorld struct {
-		st.API
+		structural.API
 		RouteIntroduce Introduce `route:"/"`
 		RouteSayHi     SayHi     `route:"/say-hi"`
 	}
