@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+set -eo pipefail
+
+main() {
+  go run cmd/structural/main.go > helloworld/api_generated.go
+  go run cmd/api/main.go &
+  readonly server_pid=$!
+
+  curl -XPOST 0.0.0.0:8000/introduction -d '{"id": "abc-123", "age": 32, "name":"brian"}'
+  curl -XPOST 0.0.0.0:8000/hi -d '{"id": 1, "age": 32, "name":"brian", "random-key": "abc"}'
+  kill "$server_pid"
+}
+
+main

@@ -10,6 +10,6 @@ func (a *HelloWorldAPI) handleRouteIntroduce(rb IntroduceRequest) (IntroduceResp
 	return IntroduceResponse{Message: fmt.Sprintf("hi my name is %s, I am %d years old. my user id is %s", rb.Name, rb.Age, rb.ID)}, nil
 
 }
-func (a *HelloWorldAPI) handleRouteGenericHello(rb map[string]interface{}, age int) (IntroduceResponse, error) {
-	return IntroduceResponse{Message: fmt.Sprintf("Hello, World")}, nil
+func (a *HelloWorldAPI) handleRouteGenericHello(rb map[string]interface{}) (IntroduceResponse, error) {
+	return IntroduceResponse{Message: fmt.Sprintf("%v", rb)}, nil
 }
